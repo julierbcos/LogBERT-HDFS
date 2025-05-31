@@ -19,13 +19,11 @@ def generate_pairs(line, window_size):
 
 
 def fixed_window(line, window_size, adaptive_window, seq_len=None, min_len=0):
-    line = [ln.split(",") for ln in line.split()]
+    line = line.strip().split()
 
-    # filter the line/session shorter than 10
     if len(line) < min_len:
         return [], []
 
-    # max seq len
     if seq_len is not None:
         line = line[:seq_len]
 
@@ -34,17 +32,8 @@ def fixed_window(line, window_size, adaptive_window, seq_len=None, min_len=0):
 
     line = np.array(line)
 
-    # if time duration exists in data
-    if line.shape[1] == 2:
-        tim = line[:,1].astype(float)
-        line = line[:, 0]
-
-        # the first time duration of a session should be 0, so max is window_size(mins) * 60
-        tim[0] = 0
-    else:
-        line = line.squeeze()
-        # if time duration doesn't exist, then create a zero array for time
-        tim = np.zeros(line.shape)
+    # No hay información de tiempo en tus datos, así que:
+    tim = np.zeros_like(line, dtype=float)
 
     logkey_seqs = []
     time_seq = []
@@ -78,21 +67,47 @@ def generate_train_valid(data_path, window_size=20, adaptive_window=True,
     logkey_seq_pairs = []
     time_seq_pairs = []
     session = 0
+    print(f"Total de líneas leídas: {len(data_iter)}")
+
     for line in tqdm(data_iter):
         if session >= num_session:
             break
         session += 1
 
+        # Debug: mostrar longitud original
+        line_items = line.strip().split()
+        print(f"Sesión {session}: longitud original = {len(line_items)}")
+
         logkeys, times = fixed_window(line, window_size, adaptive_window, seq_len, min_len)
+
+        if len(logkeys) == 0:
+            print(f"⚠️  Sesión {session} no pasó los filtros (window_size={window_size}, min_len={min_len})")
+        else:
+            print(f"✅ Sesión {session} generó {len(logkeys)} secuencias")
+
         logkey_seq_pairs += logkeys
         time_seq_pairs += times
 
-    logkey_seq_pairs = np.array(logkey_seq_pairs)
-    time_seq_pairs = np.array(time_seq_pairs)
+    print(f"Total de secuencias generadas: {len(logkey_seq_pairs)}")
+
+    logkey_seq_pairs_padded = []
+    time_seq_pairs_padded = []
+
+    for log_seq, time_seq in zip(logkey_seq_pairs, time_seq_pairs):
+      if len(log_seq) < window_size:
+        log_seq = np.pad(log_seq, (0, window_size - len(log_seq)), 'constant', constant_values=0)
+        time_seq = np.pad(time_seq, (0, window_size - len(time_seq)), 'constant', constant_values=0)
+    logkey_seq_pairs_padded.append(log_seq)
+    time_seq_pairs_padded.append(time_seq)
+    logkey_seq_pairs = np.array(logkey_seq_pairs, dtype=object)
+    time_seq_pairs = np.array(time_seq_pairs, dtype=object)
+
+    if len(logkey_seq_pairs) == 0:
+      raise ValueError("❌ No se generaron secuencias para hacer el split.")
 
     logkey_trainset, logkey_validset, time_trainset, time_validset = train_test_split(logkey_seq_pairs,
                                                                                       time_seq_pairs,
-                                                                                      test_size=test_size,
+                                                                                      test_size=valid_size,
                                                                                       random_state=1234)
 
     # sort seq_pairs by seq len
@@ -114,4 +129,3 @@ def generate_train_valid(data_path, window_size=20, adaptive_window=True,
     print("="*40)
 
     return logkey_trainset, logkey_validset, time_trainset, time_validset
-
