@@ -190,8 +190,3 @@ class Trainer():
         plt.savefig(self.model_dir + "train_valid_loss.png")
         plt.show()
         print("plot done")
-
-
-
-
-
