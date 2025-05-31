@@ -9,7 +9,6 @@ filename = os.path.join(dirname, '../deeplog')
 
 import argparse
 import torch
-
 from bert_pytorch.dataset import WordVocab
 from bert_pytorch import Predictor, Trainer
 from bert_pytorch.dataset.utils import seed_everything
@@ -111,8 +110,3 @@ if __name__ == "__main__":
         print("VOCAB SIZE:", len(vocab))
         print("save vocab in", options["vocab_path"])
         vocab.save_vocab(options["vocab_path"])
-
-
-
-
-
