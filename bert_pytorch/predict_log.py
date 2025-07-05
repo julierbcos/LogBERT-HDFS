@@ -285,6 +285,14 @@ class Predictor():
         print("TP: {}, TN: {}, FP: {}, FN: {}".format(TP, TN, FP, FN))
         print('Precision: {:.2f}%, Recall: {:.2f}%, F1-measure: {:.2f}%'.format(P, R, F1))
         elapsed_time = time.time() - start_time
-        print('elapsed_time: {}'.format(elapsed_time))
+        print('elapsed_time: {:.2f} seconds'.format(elapsed_time))
+
+        # Devuelve métricas clave para graficar
+        return {
+            "precision": P / 100,
+            "recall": R / 100,
+            "f1": F1 / 100,
+            "execution_time": elapsed_time
+        }
 
 
