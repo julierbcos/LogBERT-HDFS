@@ -97,8 +97,44 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print("arguments", args)
 
-    if args.mode == 'train':
-        Trainer(options).train()
+    elif args.mode == 'predict':
+      metrics = Predictor(options).predict()
+
+      # Extraer valores
+      precision = metrics['precision']
+      recall = metrics['recall']
+      f1 = metrics['f1']
+      exec_time = metrics['execution_time']
+
+      # Mostrar en consola
+      print(f"\n--- MÉTRICAS ---")
+      print(f"Precisión: {precision:.2f}")
+      print(f"Recall: {recall:.2f}")
+      print(f"F1 Score: {f1:.2f}")
+      print(f"Tiempo total de ejecución: {exec_time:.2f} segundos")
+
+      # Graficar y guardar como imagen
+      labels = ['Precisión', 'Recall', 'F1 Score']
+      values = [precision, recall, f1]
+
+      plt.figure(figsize=(8, 5))
+      plt.bar(labels, values)
+      plt.ylabel("Valor")
+      plt.title("Métricas de Evaluación del Modelo")
+      for i, v in enumerate(values):
+          plt.text(i, v + 0.01, f"{v:.2f}", ha='center', fontweight='bold')
+      plt.ylim(0, max(values) * 1.2)
+      plt.tight_layout()
+
+      # Crear carpeta de resultados si no existe
+      output_path = "../output/hdfs/metricas.png"
+      os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+      # Guardar imagen
+      plt.savefig(output_path)
+      plt.close()  # Cierra la figura para liberar memoria
+
+      print(f"Gráfico guardado en: {output_path}")
 
     elif args.mode == 'predict':
         Predictor(options).predict()
