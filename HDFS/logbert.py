@@ -98,7 +98,7 @@ if __name__ == "__main__":
     print("arguments", args)
 
     if args.mode == 'train':
-    Trainer(options).train()
+        Trainer(options).train()
 
     elif args.mode == 'predict':
         metrics = Predictor(options).predict()
